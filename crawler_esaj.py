@@ -1,26 +1,10 @@
-"""
-Crawler para coleta de dados de processos de 1º grau - TJSP (e-SAJ / CPOPG)
-
-Fluxo:
-1. Faz a busca pelo número unificado do processo (search.do) -> normalmente
-   retorna 302 redirecionando para a página de detalhes do processo
-   (show.do / cadastro), ou para uma página de "múltiplos resultados"
-   quando o processo tem mais de uma instância/foro.
-2. Segue o redirecionamento mantendo a mesma sessão (cookies).
-3. A página de destino é a que ainda precisamos mapear (parsing) -
-   assim que você mandar o header/estrutura dela, implemento a extração
-   dos dados (partes, movimentações, valor da causa, etc).
-
-Uso:
-    python crawler.py "1033615-89.2022.8.26.0002"
-"""
-
 from __future__ import annotations
 
 import re
 import sys
 import json
 import time
+import io
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -39,10 +23,6 @@ except ZoneInfoNotFoundError:
 
 BASE_DIR = Path(__file__).resolve().parent
 LOGS_DIR = BASE_DIR / "logs"
-SESSION_TIMESTAMP = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-SESSION_LOG_DIR = LOGS_DIR / f"session_{SESSION_TIMESTAMP}"
-SESSION_LOG_DIR.mkdir(parents=True, exist_ok=True)
-LOG_FILE = SESSION_LOG_DIR / "crawler.log"
 
 logger = logging.getLogger("tjsp_crawler")
 logger.setLevel(logging.INFO)
@@ -51,12 +31,45 @@ logger.handlers.clear()
 formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
 stream_handler = logging.StreamHandler(sys.stdout)
 stream_handler.setFormatter(formatter)
-file_handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
-file_handler.setFormatter(formatter)
+
+log_buffer = io.StringIO()
+buffer_handler = logging.StreamHandler(log_buffer)
+buffer_handler.setFormatter(formatter)
 
 logger.addHandler(stream_handler)
-logger.addHandler(file_handler)
+logger.addHandler(buffer_handler)
 logger.propagate = False
+
+
+def _create_error_session_dir() -> Path:
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    session_dir = LOGS_DIR / f"session_{timestamp}"
+    session_dir.mkdir(parents=True, exist_ok=True)
+    return session_dir
+
+
+def _persist_error_artifacts(session_dir: Path, resp: Optional[requests.Response], exc: Exception) -> None:
+    log_path = session_dir / "crawler.log"
+    with log_path.open("w", encoding="utf-8") as f:
+        f.write(log_buffer.getvalue())
+
+    exc_path = session_dir / "erro_excecao.txt"
+    with exc_path.open("w", encoding="utf-8") as f:
+        f.write(f"{type(exc).__name__}: {exc}\n")
+
+    if resp is not None:
+        html_path = session_dir / "erro_resposta.html"
+        with html_path.open("w", encoding="utf-8") as f:
+            f.write(resp.text)
+
+        info_path = session_dir / "erro_resposta.info.txt"
+        with info_path.open("w", encoding="utf-8") as f:
+            f.write(f"status_code: {resp.status_code}\n")
+            f.write(f"url: {resp.url}\n")
+            f.write(f"reason: {resp.reason}\n")
+            f.write("headers:\n")
+            for k, v in resp.headers.items():
+                f.write(f"{k}: {v}\n")
 
 BASE_URL = "https://esaj.tjsp.jus.br"
 SEARCH_PATH = "/cpopg/search.do"
@@ -249,27 +262,52 @@ class TJSPCrawler:
                     movimentacoes.append({"data": data, "descricao": descricao})
             return movimentacoes
 
-        def extrair_petições_diversas() -> list[dict]:
-            peticoes = []
-            for row in soup.select("table tr.fundoClaro, table tr.fundoEscuro"):
-                cols = row.find_all("td")
-                if len(cols) < 2:
+        def _row_belongs_to_petições(table: BeautifulSoup) -> bool:
+            header_text = " ".join(
+                th.get_text(" ", strip=True).lower() for th in table.select("tr th")
+            )
+            if "data" in header_text and "tipo" in header_text:
+                return True
+
+            previous_text = None
+            prev = table.find_previous(string=True)
+            if prev:
+                previous_text = prev.strip().lower()
+            return bool(previous_text and "petições" in previous_text)
+
+        def extrair_petições_intermediarias() -> dict[str, list[dict]]:
+            peticoes_diversas = []
+            ocorrencias = []
+
+            for table in soup.select("table"):
+                if not _row_belongs_to_petições(table):
                     continue
-                data = limpar_texto(cols[0].get_text(" ", strip=True))
-                tipo = limpar_texto(cols[1].get_text(" ", strip=True))
-                if not data and not tipo:
-                    continue
-                if not tipo:
-                    continue
-                if "Petições diversas" not in tipo and "Petições Diversas" not in tipo and "Petições" not in tipo:
-                    continue
-                peticoes.append({
-                    "data": data,
-                    "tipo": tipo,
-                    "peticionante": None,
-                    "conteudo_acessivel": False,
-                })
-            return peticoes
+
+                for row in table.select("tr.fundoClaro, tr.fundoEscuro"):
+                    cols = row.find_all("td")
+                    if len(cols) < 2:
+                        continue
+                    data = limpar_texto(cols[0].get_text(" ", strip=True))
+                    tipo = limpar_texto(cols[1].get_text(" ", strip=True))
+                    if not data and not tipo:
+                        continue
+
+                    item = {
+                        "data": data,
+                        "tipo": tipo,
+                        "peticionante": None,
+                        "conteudo_acessivel": False,
+                    }
+
+                    if tipo and "petições diversas" in tipo.lower():
+                        peticoes_diversas.append(item)
+                    else:
+                        ocorrencias.append(item)
+
+            return {
+                "peticoes_diversas": peticoes_diversas,
+                "ocorrencias": ocorrencias,
+            }
 
         valor_acao_bruto = texto("#valorAcaoProcesso")
         valor_acao = re.sub(r"\s+", " ", valor_acao_bruto).strip() if valor_acao_bruto else None
@@ -279,6 +317,8 @@ class TJSPCrawler:
             for t in soup.select("#containerDadosPrincipaisProcesso .unj-tag")
             if t.get("id") != "labelSituacaoProcesso"
         ]
+
+        peticoes_intermediarias = extrair_petições_intermediarias()
 
         dados = {
             "numero_processo": numero_processo,
@@ -294,12 +334,13 @@ class TJSPCrawler:
             "valor_acao": valor_acao,
             "partes": extrair_partes(),
             "movimentacoes": extrair_movimentacoes(),
-            "peticoes_diversas": extrair_petições_diversas(),
+            "peticoes_intermediarias": peticoes_intermediarias,
         }
         return dados
 
 
 def main():
+    resp: Optional[requests.Response] = None
     try:
         if len(sys.argv) < 2:
             numero_processo = input("Digite o número unificado do processo (CNJ): ").strip()
@@ -309,10 +350,9 @@ def main():
         else:
             numero_processo = sys.argv[1].strip()
 
-        logger.info("Iniciando execução da sessão %s", SESSION_LOG_DIR.name)
+        logger.info("Iniciando execução")
         crawler = TJSPCrawler()
         resp, ids = crawler.buscar_processo(numero_processo)
-        crawler.salvar_html_bruto(resp, BASE_DIR / "ultima_resposta.html")
 
         logger.info("IDs internos do processo: %s", ids)
 
@@ -328,9 +368,10 @@ def main():
             f.write("\n")
 
         logger.info("JSON salvo em %s", output_path)
-        print(json.dumps(dados, ensure_ascii=False, indent=2))
     except Exception as exc:
-        logger.exception("Erro inesperado durante a execução: %s", exc)
+        error_dir = _create_error_session_dir()
+        _persist_error_artifacts(error_dir, resp, exc)
+        logger.exception("Erro inesperado durante a execução. Artefatos salvos em %s", error_dir)
         raise
 
 

@@ -1,6 +1,6 @@
 {
   "numero_processo": "1033615-89.2022.8.26.0002",
-  "data_coleta": "2026-08-11T13:49:38.621013-03:00",
+  "data_coleta": "2026-08-11T15:47:53.277707-03:00",
   "classe": "Arrolamento Sumário",
   "assunto": "Inventário e Partilha",
   "foro": "Foro Regional II - Santo Amaro",
@@ -460,36 +460,64 @@
       "descricao": "Distribuído Livremente (por Sorteio) (movimentação exclusiva do distribuidor)"
     }
   ],
-  "peticoes_diversas": [
-    {
-      "data": "27/07/2022",
-      "tipo": "Petições Diversas",
-      "peticionante": null,
-      "conteudo_acessivel": false
-    },
-    {
-      "data": "30/08/2022",
-      "tipo": "Petições Diversas",
-      "peticionante": null,
-      "conteudo_acessivel": false
-    },
-    {
-      "data": "15/02/2023",
-      "tipo": "Petições Diversas",
-      "peticionante": null,
-      "conteudo_acessivel": false
-    },
-    {
-      "data": "12/07/2023",
-      "tipo": "Petições Diversas",
-      "peticionante": null,
-      "conteudo_acessivel": false
-    },
-    {
-      "data": "18/10/2023",
-      "tipo": "Petições Diversas",
-      "peticionante": null,
-      "conteudo_acessivel": false
-    }
-  ]
+  "peticoes_intermediarias": {
+    "peticoes_diversas": [
+      {
+        "data": "27/07/2022",
+        "tipo": "Petições Diversas",
+        "peticionante": null,
+        "conteudo_acessivel": false
+      },
+      {
+        "data": "30/08/2022",
+        "tipo": "Petições Diversas",
+        "peticionante": null,
+        "conteudo_acessivel": false
+      },
+      {
+        "data": "15/02/2023",
+        "tipo": "Petições Diversas",
+        "peticionante": null,
+        "conteudo_acessivel": false
+      },
+      {
+        "data": "12/07/2023",
+        "tipo": "Petições Diversas",
+        "peticionante": null,
+        "conteudo_acessivel": false
+      },
+      {
+        "data": "18/10/2023",
+        "tipo": "Petições Diversas",
+        "peticionante": null,
+        "conteudo_acessivel": false
+      }
+    ],
+    "ocorrencias": [
+      {
+        "data": "02/08/2023",
+        "tipo": "Pedido de Penhora",
+        "peticionante": null,
+        "conteudo_acessivel": false
+      },
+      {
+        "data": "27/10/2023",
+        "tipo": "Petição Intermediária",
+        "peticionante": null,
+        "conteudo_acessivel": false
+      },
+      {
+        "data": "08/04/2025",
+        "tipo": "Pedido de Desarquivamento",
+        "peticionante": null,
+        "conteudo_acessivel": false
+      },
+      {
+        "data": "23/10/2025",
+        "tipo": "Pedido de Prazo",
+        "peticionante": null,
+        "conteudo_acessivel": false
+      }
+    ]
+  }
 }

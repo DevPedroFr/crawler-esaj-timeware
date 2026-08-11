@@ -1,8 +1,0 @@
-2026-08-11 13:49:34,221 [INFO] Iniciando execução da sessão session_2026-08-11_13-49-24
-2026-08-11 13:49:34,222 [INFO] Buscando processo 1033615-89.2022.8.26.0002
-2026-08-11 13:49:34,454 [INFO] Redirecionado (302) para https://esaj.tjsp.jus.br/cpopg/show.do?processo.codigo=02002ATD60000&processo.foro=2&processo.numero=1033615-89.2022.8.26.0002
-2026-08-11 13:49:36,545 [INFO] Resposta final: 200 https://esaj.tjsp.jus.br/cpopg/show.do?processo.codigo=02002ATD60000&processo.foro=2&processo.numero=1033615-89.2022.8.26.0002 | ids={'processo.codigo': '02002ATD60000', 'processo.foro': '2', 'processo.numero': '1033615-89.2022.8.26.0002'}
-2026-08-11 13:49:38,550 [INFO] HTML salvo em C:\Users\Timeware\Desktop\crawler_esaj\ultima_resposta.html
-2026-08-11 13:49:38,552 [INFO] IDs internos do processo: {'processo.codigo': '02002ATD60000', 'processo.foro': '2', 'processo.numero': '1033615-89.2022.8.26.0002'}
-2026-08-11 13:49:38,552 [WARNING] Parser 'lxml' não disponível; usando 'html.parser'.
-2026-08-11 13:49:38,643 [INFO] JSON salvo em C:\Users\Timeware\Desktop\crawler_esaj\outputs\1033615-89.2022.8.26.0002.json
