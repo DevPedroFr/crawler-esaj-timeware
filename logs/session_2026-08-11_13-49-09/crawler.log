@@ -1,0 +1,14 @@
+2026-08-11 13:49:11,043 [INFO] Iniciando execução da sessão session_2026-08-11_13-49-09
+2026-08-11 13:49:11,044 [ERROR] Erro inesperado durante a execução: Número de processo fora do padrão CNJ: <tr class="fundoClaro">
+Traceback (most recent call last):
+  File "c:\Users\Timeware\Desktop\crawler_esaj\crawler_esaj.py", line 314, in main
+    resp, ids = crawler.buscar_processo(numero_processo)
+                ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "c:\Users\Timeware\Desktop\crawler_esaj\crawler_esaj.py", line 131, in buscar_processo
+    query = ProcessoQuery(numero_processo)
+  File "<string>", line 4, in __init__
+  File "c:\Users\Timeware\Desktop\crawler_esaj\crawler_esaj.py", line 94, in __post_init__
+    raise ValueError(
+        f"Número de processo fora do padrão CNJ: {self.numero_completo}"
+    )
+ValueError: Número de processo fora do padrão CNJ: <tr class="fundoClaro">
