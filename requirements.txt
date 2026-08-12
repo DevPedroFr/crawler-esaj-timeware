@@ -1,0 +1,6 @@
+requests>=2.28
+beautifulsoup4>=4.12
+lxml>=4.9
+pydoll
+playwright
+pytest
