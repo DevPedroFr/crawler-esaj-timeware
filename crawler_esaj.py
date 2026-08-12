@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import re
 import sys
 import json
@@ -85,7 +83,6 @@ DEFAULT_HEADERS = {
     "Referer": f"{BASE_URL}/cpopg/open.do",
 }
 
-# Regex para separar as partes do número unificado (CNJ): NNNNNNN-DD.AAAA.J.TR.OOOO
 NUMPROC_RE = re.compile(
     r"^(?P<numero>\d{7})-(?P<digito>\d{2})\.(?P<ano>\d{4})\.(?P<segmento>\d)\.(?P<tribunal>\d{2})\.(?P<foro>\d{4})$"
 )
@@ -93,9 +90,8 @@ NUMPROC_RE = re.compile(
 
 @dataclass
 class ProcessoQuery:
-    """Representa os componentes de um número de processo CNJ unificado."""
 
-    numero_completo: str  # ex: 1033615-89.2022.8.26.0002
+    numero_completo: str  
     numero: str = field(init=False)
     digito: str = field(init=False)
     ano: str = field(init=False)
@@ -114,7 +110,6 @@ class ProcessoQuery:
 
     @property
     def numero_digito_ano_unificado(self) -> str:
-        # formato usado no parâmetro numeroDigitoAnoUnificado: NNNNNNN-DD.AAAA
         return f"{self.numero}-{self.digito}.{self.ano}"
 
 
@@ -122,7 +117,7 @@ class TJSPCrawler:
     def __init__(self, delay: float = 2.0, timeout: int = 30):
         self.session = requests.Session()
         self.session.headers.update(DEFAULT_HEADERS)
-        self.delay = delay  # intervalo entre requisições (educado com o servidor)
+        self.delay = delay
         self.timeout = timeout
 
     def _sleep(self):
@@ -151,7 +146,7 @@ class TJSPCrawler:
             url,
             params=payload,
             timeout=self.timeout,
-            allow_redirects=False,  # tratamos o redirect manualmente
+            allow_redirects=False, 
         )
 
         if resp.status_code in (301, 302, 303, 307, 308):
@@ -170,8 +165,6 @@ class TJSPCrawler:
             resp_final = self.session.get(final_url, timeout=self.timeout)
             resp_final.raise_for_status()
         else:
-            # Sem redirect: pode ser página de "múltiplos resultados" ou
-            # "processo não encontrado" - retornamos como está pra inspeção.
             resp.raise_for_status()
             resp_final = resp
             ids = {}
@@ -187,7 +180,6 @@ class TJSPCrawler:
         return resp_final, ids
 
     def salvar_html_bruto(self, resp: requests.Response, caminho: str):
-        """Salva o HTML final para inspeção manual (útil nesta fase de descoberta)."""
         with open(caminho, "w", encoding="utf-8") as f:
             f.write(resp.text)
         logger.info("HTML salvo em %s", caminho)
@@ -209,9 +201,6 @@ class TJSPCrawler:
             return el.get_text(strip=True) if el else None
 
         def texto_ou_title(seletor: str) -> Optional[str]:
-            """Alguns campos têm o valor tanto no texto quanto no atributo
-            title do <span> interno (ex: #classeProcesso). Preferimos o
-            texto, mas caímos pro title se o texto vier vazio."""
             el = soup.select_one(seletor)
             if not el:
                 return None
