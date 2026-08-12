@@ -1,11 +1,3 @@
-"""Orquestrador simples para executar os crawlers.
-
-Fluxo:
- - solicita ao usuário o número CNJ (ou aceita como argv[1])
- - tenta executar o crawler ES AJ (`crawler_esaj`) com o CNJ
- - se qualquer exceção ocorrer, executa o fallback `crawler_eproc`
-"""
-
 from __future__ import annotations
 
 import sys
@@ -30,11 +22,9 @@ def main() -> None:
 		print("Número do processo não informado. Saindo.")
 		sys.exit(1)
 
-	# Tenta executar crawler_esaj primeiro
 	try:
 		import crawler_esaj
 
-		# Garantir que, se o módulo observar sys.argv, o CNJ esteja presente
 		old_argv = sys.argv[:]
 		try:
 			sys.argv = [old_argv[0], numero]
@@ -42,16 +32,14 @@ def main() -> None:
 			return
 		finally:
 			sys.argv = old_argv
-	except Exception as exc:  # noqa: BLE001 - comportamento intencional: qualquer erro cai no fallback
+	except Exception as exc:  
 		print(f"Erro no crawler_esaj: {exc}")
 		traceback.print_exc()
 		print("Executando fallback: crawler_eproc")
 
-	# Fallback: executar crawler_eproc
 	try:
 		import crawler_eproc
 
-		# Preferir chamada direta ao solver async se disponível
 		if hasattr(crawler_eproc, "solve_turnstile"):
 			try:
 				asyncio.run(crawler_eproc.solve_turnstile(numero))
@@ -59,7 +47,6 @@ def main() -> None:
 			except Exception:
 				print("Erro ao executar crawler_eproc via solve_turnstile; tentando chamar main().")
 
-		# Último recurso: chamar main() do módulo (pode pedir input novamente)
 		try:
 			old_argv = sys.argv[:]
 			sys.argv = [old_argv[0], numero]
