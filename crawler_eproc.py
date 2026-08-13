@@ -59,6 +59,7 @@ def _texto_indica_processo_privado(texto: str | None) -> bool:
         'sigiloso',
         'sigilo',
         'privado',
+        'chave/senha de acesso.'
     )
     return any(indicador in valor for indicador in indicadores)
 

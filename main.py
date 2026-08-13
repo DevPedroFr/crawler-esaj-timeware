@@ -47,6 +47,7 @@ def main() -> None:
 			except Exception:
 				print("Erro ao executar crawler_eproc via solve_turnstile; tentando chamar main().")
 
+
 		try:
 			old_argv = sys.argv[:]
 			sys.argv = [old_argv[0], numero]

@@ -1,12 +1,33 @@
-Para roda o proeto siga as seguintes etapas:
+# Como executar o projeto
 
-- Instale as dependências
-'''pip install -r requirements.txt'''
+## 1. Instale as dependências
 
-- Rode o arquivo main
-'''python main.py'''
+Execute no terminal:
 
-- Insira o CNJ
-'''Digite o número unificado do processo (CNJ):'''
+```bash
+pip install -r requirements.txt
+```
 
-- O Json será salvo na pasta outputs
+## 2. Execute o projeto
+
+Rode o arquivo `main.py`:
+
+```bash
+python main.py
+```
+
+## 3. Informe o número do processo
+
+Quando solicitado, informe o número CNJ do processo:
+
+```text
+Digite o número unificado do processo (CNJ):
+```
+
+## 4. Resultado
+
+O arquivo JSON gerado será salvo automaticamente na pasta:
+
+```text
+outputs/
+```

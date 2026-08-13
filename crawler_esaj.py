@@ -363,6 +363,5 @@ def main():
         logger.exception("Erro inesperado durante a execução. Artefatos salvos em %s", error_dir)
         raise
 
-
 if __name__ == "__main__":
     main()
