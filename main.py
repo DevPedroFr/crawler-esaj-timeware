@@ -4,7 +4,7 @@ import sys
 import asyncio
 import traceback
 
-
+#input para número CNJ
 def _obter_numero_processo() -> str:
 	if len(sys.argv) >= 2 and sys.argv[1].strip():
 		return sys.argv[1].strip()

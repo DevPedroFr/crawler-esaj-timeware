@@ -87,9 +87,9 @@ NUMPROC_RE = re.compile(
     r"^(?P<numero>\d{7})-(?P<digito>\d{2})\.(?P<ano>\d{4})\.(?P<segmento>\d)\.(?P<tribunal>\d{2})\.(?P<foro>\d{4})$"
 )
 
-
 @dataclass
 class ProcessoQuery:
+    #Dataclass para armazenar e validar dados do processo, número, dígito, ano e foro
 
     numero_completo: str  
     numero: str = field(init=False)
@@ -114,6 +114,7 @@ class ProcessoQuery:
 
 
 class TJSPCrawler:
+    #classe para buscar e processar as informações 
     def __init__(self, delay: float = 2.0, timeout: int = 30):
         self.session = requests.Session()
         self.session.headers.update(DEFAULT_HEADERS)
@@ -123,6 +124,7 @@ class TJSPCrawler:
     def _sleep(self):
         time.sleep(self.delay)
 
+    #prepara o payload para enviar a req
     def _montar_payload(self, query: ProcessoQuery) -> list[tuple[str, str]]:
         return [
             ("conversationId", ""),
@@ -135,6 +137,7 @@ class TJSPCrawler:
             ("dadosConsulta.tipoNuProcesso", "UNIFICADO"),
         ]
 
+    #busca o processo e retorna a resposta e os ids 
     def buscar_processo(self, numero_processo: str) -> tuple[requests.Response, dict]:
         query = ProcessoQuery(numero_processo)
         payload = self._montar_payload(query)
@@ -179,16 +182,19 @@ class TJSPCrawler:
         self._sleep()
         return resp_final, ids
 
+    #salva o html da resposta em um arquivo
     def salvar_html_bruto(self, resp: requests.Response, caminho: str):
         with open(caminho, "w", encoding="utf-8") as f:
             f.write(resp.text)
         logger.info("HTML salvo em %s", caminho)
 
+    #declara a data de coleta no formato iso
     def _data_coleta_iso(self) -> str:
         if TZ_SAO_PAULO is not None:
             return datetime.now(TZ_SAO_PAULO).isoformat()
         return datetime.now().astimezone().isoformat()
 
+    #analisa o html da resposta e extrai os dados
     def parse_cabecalho_processo(self, resp: requests.Response, numero_processo: str) -> dict:
         try:
             soup = BeautifulSoup(resp.text, "lxml")
@@ -240,6 +246,7 @@ class TJSPCrawler:
                 partes.append({"polo": tipo, "nome": nome, "advogados": advogados})
             return partes
 
+        #extrai as movimentações
         def extrair_movimentacoes() -> list[dict]:
             movimentacoes = []
             for row in soup.select("tr.containerMovimentacao"):
@@ -251,6 +258,7 @@ class TJSPCrawler:
                     movimentacoes.append({"data": data, "descricao": descricao})
             return movimentacoes
 
+        #verifica se a tabela pertence a seção de petições intermediárias
         def _row_belongs_to_petições(table: BeautifulSoup) -> bool:
             header_text = " ".join(
                 th.get_text(" ", strip=True).lower() for th in table.select("tr th")
@@ -264,6 +272,7 @@ class TJSPCrawler:
                 previous_text = prev.strip().lower()
             return bool(previous_text and "petições" in previous_text)
 
+        #extrai as petições intermediárias e ocorrências
         def extrair_petições_intermediarias() -> dict[str, list[dict]]:
             peticoes_diversas = []
             ocorrencias = []

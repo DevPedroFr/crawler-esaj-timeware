@@ -5,7 +5,7 @@ import time
 
 from pydoll.browser.chromium import Chrome
 
-
+#formata o cnj para se encaixar no valor esperado pelo eproc 
 def normalizar_cnj(numero: str) -> str:
     valor = re.sub(r'\D', '', numero or '')
     if not valor:
@@ -21,7 +21,7 @@ def normalizar_cnj(numero: str) -> str:
 def _normalizar_texto(texto: str | None) -> str:
     return re.sub(r'\s+', ' ', (texto or '')).strip().lower()
 
-
+#indicadores para detectar se o erro é de captca
 def _texto_indica_captcha_pendente(texto: str | None) -> bool:
     valor = _normalizar_texto(texto)
     if not valor:
@@ -43,7 +43,7 @@ def _texto_indica_captcha_pendente(texto: str | None) -> bool:
     )
     return any(indicador in valor for indicador in indicadores)
 
-
+#indicadores para decetar se o processo é privado ou sigiloso, separados por palavras chaves
 def _texto_indica_processo_privado(texto: str | None) -> bool:
     valor = _normalizar_texto(texto)
     if not valor:
@@ -63,7 +63,7 @@ def _texto_indica_processo_privado(texto: str | None) -> bool:
     )
     return any(indicador in valor for indicador in indicadores)
 
-
+#valida se o cnj inserido está no formato correto
 def validar_cnj_para_envio(numero: str) -> str:
     cnj = normalizar_cnj(numero)
     if not re.fullmatch(r'\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}', cnj):
@@ -83,7 +83,7 @@ def _extrair_valor_execucao_script(resultado):
             return resultado['value']
     return resultado
 
-
+#coleta o token do captcha
 async def obter_token_turnstile(tab) -> str:
     try:
         resultado = await tab.execute_script(
@@ -119,7 +119,7 @@ async def obter_token_turnstile(tab) -> str:
     except Exception:
         return ''
 
-
+#aguarda o token estar disponível para enviar o formulário
 async def esperar_token_turnstile(tab, timeout: float = 30.0) -> str:
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
@@ -138,7 +138,7 @@ async def esperar_token_turnstile(tab, timeout: float = 30.0) -> str:
 
     return ''
 
-
+#valida se a página está pronta para envio do formulário, usando as funções de validar o captcha e se o processo não é acessível
 async def validar_pagina_antes_do_submit(tab) -> None:
     try:
         campo = await tab.find(id='txtNumProcesso', timeout=5, raise_exc=False)
@@ -169,7 +169,7 @@ async def validar_pagina_antes_do_submit(tab) -> None:
             'Captcha ainda não foi concluído. Resolva a verificação antes de enviar o CNJ.'
         )
 
-
+#prepara o script para enviar o formulário
 def _script_submit_cnj(cnj: str, token_turnstile: str) -> str:
     cnj_js = json.dumps(cnj)
     token_js = json.dumps(token_turnstile)
@@ -224,7 +224,7 @@ def _script_submit_cnj(cnj: str, token_turnstile: str) -> str:
         return true;
     """
 
-
+#resolve o captcha e envia o formulário com o cnj
 async def solve_turnstile(numero_processo: str):
     browser = Chrome()
 
